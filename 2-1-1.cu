@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < n; i++) {
         if (h_A[i] == k) h_answer++;
     }
-    printf("[host] answer : %d\n", h_answer);
+    printf("[host] host answer : %d\n", h_answer);
 
     int* d_idata, * d_odata;
     int blocksize = 512;
@@ -90,105 +90,114 @@ int main(int argc, char** argv) {
     cudaMemcpy(h_odata, d_odata, grid.x * sizeof(int), cudaMemcpyDeviceToHost);
     int d_answer = 0;
     for (int i = 0; i < grid.x; i++) d_answer += h_odata[i];
-    printf("[host] answer : %d\n", d_answer);
+    printf("[host] device answer : %d\n", d_answer);
     checkResultInt(&h_answer, &d_answer, 1);
+
+    // memory free
+    free(h_A);
+    free(h_odata);
+    cudaFree(d_idata);
+    cudaFree(d_odata);
 }
 
 /*
 output:
-c:\coding\Cuda\x64\Debug>nvprof Cuda.exe 1
-==27936== NVPROF is profiling process 27936, command: Cuda.exe 1
-[host] Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
-[host] answer : 368
+c:\coding\Cuda\x64\Debug>nvprof ./Cuda.exe 1
+==27652== NVPROF is profiling process 27652, command: ./Cuda.exe 1
+[host] ./Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
+[host] host answer : 368
 [host] datasize (1000), gird(8), block(512)
-[host] answer : 368
+[host] device answer : 368
 [host] Arrays match.
 
-==27936== Profiling application: Cuda.exe 1
-==27936== Warning: 12 API trace records have same start and end timestamps.
+==27652== Profiling application: ./Cuda.exe 1
+==27652== Warning: 28 API trace records have same start and end timestamps.
 This can happen because of short execution duration of CUDA APIs and low timer resolution on the underlying operating system.
-==27936== Profiling result:
+==27652== Profiling result:
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   66.45%  9.5050us         1  9.5050us  9.5050us  9.5050us  sumArrayElementK(int*, int*, unsigned int, int)
-                   17.89%  2.5590us         1  2.5590us  2.5590us  2.5590us  [CUDA memcpy DtoH]
-                   15.66%  2.2400us         1  2.2400us  2.2400us  2.2400us  [CUDA memcpy HtoD]
-      API calls:   72.26%  65.873ms         1  65.873ms  65.873ms  65.873ms  cudaSetDevice
-                   25.90%  23.613ms         1  23.613ms  23.613ms  23.613ms  cuDevicePrimaryCtxRelease
-                    1.18%  1.0730ms         1  1.0730ms  1.0730ms  1.0730ms  cudaLaunchKernel
-                    0.25%  230.60us         2  115.30us  49.100us  181.50us  cudaMemcpy
-                    0.22%  204.80us         2  102.40us  4.9000us  199.90us  cudaMalloc
-                    0.13%  119.40us         1  119.40us  119.40us  119.40us  cuLibraryUnload
-                    0.03%  28.700us       114     251ns       0ns  4.8000us  cuDeviceGetAttribute
-                    0.00%  4.5000us         1  4.5000us  4.5000us  4.5000us  cudaGetDeviceProperties
-                    0.00%  3.2000us         1  3.2000us  3.2000us  3.2000us  cuDeviceTotalMem
-                    0.00%  2.2000us         3     733ns     100ns  1.9000us  cuDeviceGetCount
-                    0.00%  2.0000us         1  2.0000us  2.0000us  2.0000us  cuModuleGetLoadingMode
-                    0.00%  1.2000us         1  1.2000us  1.2000us  1.2000us  cuDeviceGetName
-                    0.00%     800ns         2     400ns     100ns     700ns  cuDeviceGet
-                    0.00%     600ns         1     600ns     600ns     600ns  cuDeviceGetLuid
+ GPU activities:   67.96%  9.5040us         1  9.5040us  9.5040us  9.5040us  sumArrayElementK(int*, int*, unsigned int, int)
+                   16.48%  2.3040us         1  2.3040us  2.3040us  2.3040us  [CUDA memcpy DtoH]
+                   15.56%  2.1760us         1  2.1760us  2.1760us  2.1760us  [CUDA memcpy HtoD]
+      API calls:   73.07%  70.262ms         1  70.262ms  70.262ms  70.262ms  cudaSetDevice
+                   24.87%  23.915ms         1  23.915ms  23.915ms  23.915ms  cuDevicePrimaryCtxRelease
+                    1.06%  1.0187ms         1  1.0187ms  1.0187ms  1.0187ms  cudaLaunchKernel
+                    0.36%  344.10us         2  172.05us  9.3000us  334.80us  cudaMalloc
+                    0.31%  295.90us         2  147.95us  29.300us  266.60us  cudaFree
+                    0.18%  168.90us         2  84.450us  66.300us  102.60us  cudaMemcpy
+                    0.12%  116.00us         1  116.00us  116.00us  116.00us  cuLibraryUnload
+                    0.02%  22.000us       114     192ns       0ns  4.6000us  cuDeviceGetAttribute
+                    0.01%  6.9000us         1  6.9000us  6.9000us  6.9000us  cudaGetDeviceProperties
+                    0.00%  2.2000us         3     733ns     100ns  1.8000us  cuDeviceGetCount
+                    0.00%  2.2000us         1  2.2000us  2.2000us  2.2000us  cuDeviceTotalMem
+                    0.00%  1.8000us         1  1.8000us  1.8000us  1.8000us  cuModuleGetLoadingMode
+                    0.00%  1.2000us         2     600ns     100ns  1.1000us  cuDeviceGet
+                    0.00%     800ns         1     800ns     800ns     800ns  cuDeviceGetName
+                    0.00%     400ns         1     400ns     400ns     400ns  cuDeviceGetLuid
                     0.00%     200ns         1     200ns     200ns     200ns  cuDeviceGetUuid
 
-c:\coding\Cuda\x64\Debug>nvprof Cuda.exe 2
-==6444== NVPROF is profiling process 6444, command: Cuda.exe 2
-[host] Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
-[host] answer : 371
+c:\coding\Cuda\x64\Debug>nvprof ./Cuda.exe 2
+==28504== NVPROF is profiling process 28504, command: ./Cuda.exe 2
+[host] ./Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
+[host] host answer : 371
 [host] datasize (1000), gird(8), block(512)
-[host] answer : 371
+[host] device answer : 371
 [host] Arrays match.
 
-==6444== Profiling application: Cuda.exe 2
-==6444== Warning: 29 API trace records have same start and end timestamps.
+==28504== Profiling application: ./Cuda.exe 2
+==28504== Warning: 31 API trace records have same start and end timestamps.
 This can happen because of short execution duration of CUDA APIs and low timer resolution on the underlying operating system.
-==6444== Profiling result:
+==28504== Profiling result:
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   67.78%  9.8240us         1  9.8240us  9.8240us  9.8240us  sumArrayElementK(int*, int*, unsigned int, int)
-                   16.34%  2.3680us         1  2.3680us  2.3680us  2.3680us  [CUDA memcpy DtoH]
-                   15.89%  2.3030us         1  2.3030us  2.3030us  2.3030us  [CUDA memcpy HtoD]
-      API calls:   66.71%  67.935ms         1  67.935ms  67.935ms  67.935ms  cudaSetDevice
-                   31.79%  32.376ms         1  32.376ms  32.376ms  32.376ms  cuDevicePrimaryCtxRelease
-                    1.00%  1.0181ms         1  1.0181ms  1.0181ms  1.0181ms  cudaLaunchKernel
-                    0.24%  241.70us         2  120.85us  5.0000us  236.70us  cudaMalloc
-                    0.16%  160.60us         2  80.300us  58.300us  102.30us  cudaMemcpy
-                    0.07%  73.600us         1  73.600us  73.600us  73.600us  cuLibraryUnload
-                    0.02%  18.300us       114     160ns       0ns  2.6000us  cuDeviceGetAttribute
-                    0.00%  4.1000us         1  4.1000us  4.1000us  4.1000us  cudaGetDeviceProperties
-                    0.00%  2.2000us         1  2.2000us  2.2000us  2.2000us  cuDeviceTotalMem
-                    0.00%  2.1000us         3     700ns     100ns  1.7000us  cuDeviceGetCount
-                    0.00%  1.8000us         1  1.8000us  1.8000us  1.8000us  cuModuleGetLoadingMode
-                    0.00%     900ns         2     450ns     100ns     800ns  cuDeviceGet
-                    0.00%     900ns         1     900ns     900ns     900ns  cuDeviceGetName
-                    0.00%     300ns         1     300ns     300ns     300ns  cuDeviceGetLuid
-                    0.00%     100ns         1     100ns     100ns     100ns  cuDeviceGetUuid
-
-c:\coding\Cuda\x64\Debug>nvprof Cuda.exe 3
-==28844== NVPROF is profiling process 28844, command: Cuda.exe 3
-[host] Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
-[host] answer : 349
-[host] datasize (1000), gird(8), block(512)
-[host] answer : 349
-[host] Arrays match.
-
-==28844== Profiling application: Cuda.exe 3
-==28844== Warning: 32 API trace records have same start and end timestamps.
-This can happen because of short execution duration of CUDA APIs and low timer resolution on the underlying operating system.
-==28844== Profiling result:
-            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   67.27%  9.5360us         1  9.5360us  9.5360us  9.5360us  sumArrayElementK(int*, int*, unsigned int, int)
-                   16.48%  2.3360us         1  2.3360us  2.3360us  2.3360us  [CUDA memcpy DtoH]
-                   16.25%  2.3040us         1  2.3040us  2.3040us  2.3040us  [CUDA memcpy HtoD]
-      API calls:   72.64%  66.181ms         1  66.181ms  66.181ms  66.181ms  cudaSetDevice
-                   26.03%  23.715ms         1  23.715ms  23.715ms  23.715ms  cuDevicePrimaryCtxRelease
-                    0.87%  796.60us         1  796.60us  796.60us  796.60us  cudaLaunchKernel
-                    0.22%  196.40us         2  98.200us  6.9000us  189.50us  cudaMalloc
-                    0.14%  131.90us         2  65.950us  58.500us  73.400us  cudaMemcpy
-                    0.06%  52.300us         1  52.300us  52.300us  52.300us  cuLibraryUnload
-                    0.02%  17.700us       114     155ns       0ns  2.5000us  cuDeviceGetAttribute
-                    0.00%  4.0000us         1  4.0000us  4.0000us  4.0000us  cudaGetDeviceProperties
+ GPU activities:   67.95%  9.5680us         1  9.5680us  9.5680us  9.5680us  sumArrayElementK(int*, int*, unsigned int, int)
+                   16.59%  2.3360us         1  2.3360us  2.3360us  2.3360us  [CUDA memcpy DtoH]
+                   15.45%  2.1760us         1  2.1760us  2.1760us  2.1760us  [CUDA memcpy HtoD]
+      API calls:   69.03%  66.941ms         1  66.941ms  66.941ms  66.941ms  cudaSetDevice
+                   28.99%  28.114ms         1  28.114ms  28.114ms  28.114ms  cuDevicePrimaryCtxRelease
+                    1.03%  1.0035ms         1  1.0035ms  1.0035ms  1.0035ms  cudaLaunchKernel
+                    0.41%  397.60us         2  198.80us  9.3000us  388.30us  cudaFree
+                    0.24%  231.20us         2  115.60us  5.2000us  226.00us  cudaMalloc
+                    0.17%  167.40us         2  83.700us  58.100us  109.30us  cudaMemcpy
+                    0.04%  42.000us         1  42.000us  42.000us  42.000us  cuLibraryUnload
+                    0.03%  33.600us       114     294ns       0ns  7.0000us  cuDeviceGetAttribute
+                    0.03%  25.800us         1  25.800us  25.800us  25.800us  cudaGetDeviceProperties
+                    0.00%  2.9000us         1  2.9000us  2.9000us  2.9000us  cuDeviceGetUuid
+                    0.00%  2.4000us         1  2.4000us  2.4000us  2.4000us  cuDeviceTotalMem
                     0.00%  1.9000us         3     633ns       0ns  1.6000us  cuDeviceGetCount
-                    0.00%  1.9000us         1  1.9000us  1.9000us  1.9000us  cuModuleGetLoadingMode
-                    0.00%  1.7000us         1  1.7000us  1.7000us  1.7000us  cuDeviceTotalMem
-                    0.00%     900ns         2     450ns     100ns     800ns  cuDeviceGet
-                    0.00%     900ns         1     900ns     900ns     900ns  cuDeviceGetName
+                    0.00%  1.8000us         1  1.8000us  1.8000us  1.8000us  cuModuleGetLoadingMode
+                    0.00%  1.0000us         2     500ns     100ns     900ns  cuDeviceGet
+                    0.00%  1.0000us         1  1.0000us  1.0000us  1.0000us  cuDeviceGetName
                     0.00%     300ns         1     300ns     300ns     300ns  cuDeviceGetLuid
-                    0.00%     100ns         1     100ns     100ns     100ns  cuDeviceGetUuid
+
+c:\coding\Cuda\x64\Debug>nvprof ./Cuda.exe 3
+==9228== NVPROF is profiling process 9228, command: ./Cuda.exe 3
+[host] ./Cuda.exe starting transpose at device 0: NVIDIA GeForce MX450
+[host] host answer : 349
+[host] datasize (1000), gird(8), block(512)
+[host] device answer : 349
+[host] Arrays match.
+
+==9228== Profiling application: ./Cuda.exe 3
+==9228== Warning: 1 API trace records have same start and end timestamps.
+This can happen because of short execution duration of CUDA APIs and low timer resolution on the underlying operating system.
+==9228== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   69.28%  9.8880us         1  9.8880us  9.8880us  9.8880us  sumArrayElementK(int*, int*, unsigned int, int)
+                   15.70%  2.2400us         1  2.2400us  2.2400us  2.2400us  [CUDA memcpy DtoH]
+                   15.02%  2.1440us         1  2.1440us  2.1440us  2.1440us  [CUDA memcpy HtoD]
+      API calls:   75.98%  81.343ms         1  81.343ms  81.343ms  81.343ms  cudaSetDevice
+                   21.76%  23.295ms         1  23.295ms  23.295ms  23.295ms  cuDevicePrimaryCtxRelease
+                    0.98%  1.0530ms         1  1.0530ms  1.0530ms  1.0530ms  cudaLaunchKernel
+                    0.58%  623.40us         2  311.70us  15.100us  608.30us  cudaFree
+                    0.31%  328.00us         2  164.00us  23.200us  304.80us  cudaMalloc
+                    0.26%  276.40us         2  138.20us  65.300us  211.10us  cudaMemcpy
+                    0.09%  100.70us         1  100.70us  100.70us  100.70us  cuLibraryUnload
+                    0.03%  27.600us       114     242ns       0ns  3.9000us  cuDeviceGetAttribute
+                    0.00%  4.5000us         1  4.5000us  4.5000us  4.5000us  cudaGetDeviceProperties
+                    0.00%  3.7000us         3  1.2330us     100ns  3.3000us  cuDeviceGetCount
+                    0.00%  2.0000us         1  2.0000us  2.0000us  2.0000us  cuModuleGetLoadingMode
+                    0.00%  2.0000us         1  2.0000us  2.0000us  2.0000us  cuDeviceTotalMem
+                    0.00%  1.0000us         2     500ns     100ns     900ns  cuDeviceGet
+                    0.00%     900ns         1     900ns     900ns     900ns  cuDeviceGetName
+                    0.00%     600ns         1     600ns     600ns     600ns  cuDeviceGetLuid
+                    0.00%     200ns         1     200ns     200ns     200ns  cuDeviceGetUuid
 */
