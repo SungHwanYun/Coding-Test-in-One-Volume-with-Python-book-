@@ -173,10 +173,10 @@ int main(int argc, char** argv) {
     CSRGraph GDeep;
     GDeep.vertex_number = G.vertex_number;
     GDeep.edge_number = G.edge_number;
-    CHECK(cudaMalloc(&(GDeep.srcPtrs), G.vertex_number * sizeof(G.srcPtrs[0])));
+    CHECK(cudaMalloc(&(GDeep.srcPtrs), (G.vertex_number + 1) * sizeof(G.srcPtrs[0])));
     CHECK(cudaMalloc(&(GDeep.dst), G.edge_number * sizeof(G.dst[0])));
     CHECK(cudaMemcpy(GDeep.srcPtrs, G.srcPtrs, 
-        G.vertex_number*sizeof(G.srcPtrs[0]), cudaMemcpyHostToDevice));
+        (G.vertex_number + 1)*sizeof(G.srcPtrs[0]), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(GDeep.dst, G.dst,
         G.edge_number * sizeof(G.dst[0]), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpyToSymbol(csrGraph, &GDeep, sizeof(CSRGraph)));
